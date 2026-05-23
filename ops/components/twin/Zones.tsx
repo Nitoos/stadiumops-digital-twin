@@ -5,10 +5,20 @@ import { Html } from "@react-three/drei";
 import { useStore } from "@/lib/store";
 import { LOS_COLOR } from "@/components/ui/DensityLegend";
 
+/**
+ * Build a Three.Shape from a layout polygon (XY in layout coords).
+ *
+ * We later rotate the mesh `-π/2` around X so it lies flat on the ground.
+ * That rotation maps shape-Y → world -Z, so layout Y = 75 would land at
+ * world Z = -75 (mirrored across the bowl). To get layout Y → world +Z,
+ * we negate Y when building the shape AND reverse the vertex order so the
+ * triangulated face normal still points up.
+ */
 function polyToShape(polygon: number[][]): THREE.Shape {
   const shape = new THREE.Shape();
-  shape.moveTo(polygon[0][0], polygon[0][1]);
-  for (let i = 1; i < polygon.length; i++) shape.lineTo(polygon[i][0], polygon[i][1]);
+  const pts = [...polygon].reverse(); // preserve face winding after Y negation
+  shape.moveTo(pts[0][0], -pts[0][1]);
+  for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], -pts[i][1]);
   shape.closePath();
   return shape;
 }
