@@ -22,3 +22,6 @@ dist/
 # Editor
 .vscode/
 .idea/
+playwright-report/
+test-results/
+.next/
