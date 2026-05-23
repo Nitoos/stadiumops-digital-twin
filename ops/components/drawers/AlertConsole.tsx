@@ -2,6 +2,7 @@
 import { Stack, Typography, Box } from "@mui/material";
 import { Drawer } from "@/components/ui/Drawer";
 import { useStore } from "@/lib/store";
+import { zoneName } from "@/lib/zoneName";
 
 const STYLES: Record<string, { bg: string; border: string; color: string; label: string }> = {
   critical: { bg: "#FCE8E6", border: "#D93025", color: "#B31412", label: "Critical" },
@@ -11,6 +12,7 @@ const STYLES: Record<string, { bg: string; border: string; color: string; label:
 
 export function AlertConsole() {
   const alerts = useStore((s) => s.alerts);
+  const layout = useStore((s) => s.layout);
   const criticalCount = alerts.filter((a) => a.severity === "critical").length;
   const tone = criticalCount > 0 ? "critical" : alerts.length > 0 ? "warning" : "idle";
 
@@ -27,6 +29,7 @@ export function AlertConsole() {
         <Stack spacing={1}>
           {alerts.slice(0, 6).map((a) => {
             const s = STYLES[a.severity] ?? STYLES.info;
+            const zone = zoneName(a.zone_id, layout);
             return (
               <Box key={a.id} sx={{
                 p: 1.5,
@@ -41,11 +44,19 @@ export function AlertConsole() {
                   }}>
                     {s.label}
                   </Typography>
-                  <Typography sx={{ fontSize: 11, color: "text.secondary", fontWeight: 500 }}>
-                    {a.zone_id ?? "—"}
-                  </Typography>
+                  {a.zone_id && (
+                    <Typography sx={{ fontSize: 11, color: "text.secondary", fontWeight: 500, fontFamily: "Roboto Mono, monospace" }}>
+                      {a.zone_id}
+                    </Typography>
+                  )}
                 </Stack>
-                <Typography sx={{ fontSize: 13, color: "text.primary", lineHeight: 1.45 }}>
+                <Typography sx={{
+                  fontFamily: '"Google Sans Display", sans-serif',
+                  fontSize: 14, fontWeight: 500, color: "text.primary", lineHeight: 1.3, mb: 0.5,
+                }}>
+                  {zone}
+                </Typography>
+                <Typography sx={{ fontSize: 12.5, color: "text.primary", lineHeight: 1.45 }}>
                   {a.reason}
                 </Typography>
                 {a.density_per_m2 !== undefined && (
