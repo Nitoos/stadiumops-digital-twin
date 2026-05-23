@@ -151,19 +151,20 @@ class CrowdSim:
                 self._zone_occ[zone_id] += mag
 
     def _concourse_for_stand(self, stand_id: str) -> str:
+        # West stand A → West concourse, North B → North, East C → East, South D → South
         mapping = {
-            "stand_a": "concourse_e",
+            "stand_a": "concourse_w",
             "stand_b": "concourse_n",
-            "stand_c": "concourse_w",
+            "stand_c": "concourse_e",
             "stand_d": "concourse_s",
         }
         return mapping.get(stand_id, "concourse_n")
 
     def _stand_for_concourse(self, concourse_id: str) -> str | None:
         mapping = {
-            "concourse_e": "stand_a",
+            "concourse_w": "stand_a",
             "concourse_n": "stand_b",
-            "concourse_w": "stand_c",
+            "concourse_e": "stand_c",
             "concourse_s": "stand_d",
         }
         return mapping.get(concourse_id)

@@ -64,9 +64,9 @@ export function Zones() {
     }
     // Concourses inherit gates from the stand they neighbour
     const standForConcourse: Record<string, string> = {
-      concourse_e: "stand_a",
+      concourse_w: "stand_a",
       concourse_n: "stand_b",
-      concourse_w: "stand_c",
+      concourse_e: "stand_c",
       concourse_s: "stand_d",
     };
     for (const [conc, stand] of Object.entries(standForConcourse)) {
