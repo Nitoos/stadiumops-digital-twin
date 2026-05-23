@@ -2,13 +2,14 @@
 import { Canvas } from "@react-three/fiber";
 import { EffectComposer, Vignette } from "@react-three/postprocessing";
 import { useState } from "react";
-import { Box, ToggleButton, ToggleButtonGroup, Stack, Typography } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup, Stack, Typography, Tooltip, IconButton } from "@mui/material";
 import { Stadium } from "./Stadium";
 import { CameraRig, type CameraMode } from "./CameraRig";
 import { Zones } from "./Zones";
 import { DispatchedTeams } from "./DispatchedTeams";
 import { AlertMarkers } from "./AlertMarkers";
 import { WeatherFront } from "./WeatherFront";
+import { Labels } from "./Labels";
 
 const CAMERA_LABELS: Record<CameraMode, string> = {
   bird: "Bird",
@@ -18,14 +19,14 @@ const CAMERA_LABELS: Record<CameraMode, string> = {
 
 export function Scene() {
   const [mode, setMode] = useState<CameraMode>("iso");
+  const [showLabels, setShowLabels] = useState(true);
+
   return (
     <Box sx={{ position: "absolute", inset: 0 }}>
       <Canvas shadows dpr={[1, 2]} camera={{ fov: 38, near: 0.5, far: 600 }}>
-        {/* Daytime sky — Google blue gradient */}
         <color attach="background" args={["#E8F0FE"]} />
         <fog attach="fog" args={["#E8F0FE", 220, 380]} />
 
-        {/* Soft daylight */}
         <hemisphereLight args={["#FFFFFF", "#DADCE0", 0.8]} />
         <ambientLight intensity={0.45} />
         <directionalLight
@@ -49,6 +50,7 @@ export function Scene() {
         <DispatchedTeams />
         <AlertMarkers />
         <WeatherFront />
+        {showLabels && <Labels />}
         <CameraRig mode={mode} />
 
         <EffectComposer multisampling={4}>
@@ -56,7 +58,7 @@ export function Scene() {
         </EffectComposer>
       </Canvas>
 
-      {/* Camera mode toggle — light pill */}
+      {/* Camera mode toggle */}
       <Box sx={{
         position: "absolute", top: 12, right: 12,
         bgcolor: "rgba(255,255,255,0.96)",
@@ -64,6 +66,7 @@ export function Scene() {
         boxShadow: "0 1px 2px rgba(60,64,67,0.2), 0 1px 3px rgba(60,64,67,0.1)",
         borderRadius: "999px",
         px: 0.5, py: 0.5,
+        display: "flex", alignItems: "center", gap: 0.5,
       }}>
         <ToggleButtonGroup
           size="small" exclusive value={mode}
@@ -85,6 +88,21 @@ export function Scene() {
             <ToggleButton key={m} value={m}>{CAMERA_LABELS[m]}</ToggleButton>
           ))}
         </ToggleButtonGroup>
+        <Box sx={{ width: 1, height: 20, bgcolor: "rgba(60,64,67,0.12)", mx: 0.25 }} />
+        <Tooltip title={showLabels ? "Hide labels" : "Show labels"}>
+          <IconButton
+            size="small"
+            onClick={() => setShowLabels((s) => !s)}
+            sx={{
+              color: showLabels ? "#1A73E8" : "#5F6368",
+              bgcolor: showLabels ? "#E8F0FE" : "transparent",
+              borderRadius: "999px",
+              "&:hover": { bgcolor: showLabels ? "#D2E3FC" : "rgba(60,64,67,0.06)" },
+            }}
+          >
+            <Box className="material-symbols-sharp" sx={{ fontSize: 18 }}>label</Box>
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {/* Venue chip bottom-left */}
