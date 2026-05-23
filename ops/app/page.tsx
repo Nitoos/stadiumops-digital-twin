@@ -1,5 +1,5 @@
 "use client";
-import { Box, Stack, Typography, Button } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -7,6 +7,9 @@ import { wsClient } from "@/lib/ws";
 import { useStore } from "@/lib/store";
 import { DensityLegend } from "@/components/ui/DensityLegend";
 import { KPIChip } from "@/components/ui/KPIChip";
+import { VenueHeader } from "@/components/ui/VenueHeader";
+import { OperatorBadge } from "@/components/ui/OperatorBadge";
+import { SceneRail } from "@/components/ui/SceneRail";
 import { Scene } from "@/components/twin/Scene";
 import { AlertConsole } from "@/components/drawers/AlertConsole";
 import { ProtocolArmed } from "@/components/drawers/ProtocolArmed";
@@ -17,13 +20,6 @@ import { InboundPipeline } from "@/components/drawers/InboundPipeline";
 import { TimeScrubber } from "@/components/controls/TimeScrubber";
 import { ForecastLens } from "@/components/controls/ForecastLens";
 import { WhatIfButton } from "@/components/controls/WhatIfButton";
-
-const SCENES: { name: string; label: string; color: "error" | "warning" | "secondary" | "primary" }[] = [
-  { name: "entry_surge", label: "Entry surge", color: "error" },
-  { name: "storm", label: "Storm", color: "warning" },
-  { name: "drone_threat", label: "Drone threat", color: "primary" },
-  { name: "exit_surge", label: "Exit surge", color: "secondary" },
-];
 
 export default function Page() {
   const setLayout = useStore((s) => s.setLayout);
@@ -58,40 +54,73 @@ export default function Page() {
     return () => { off(); clearInterval(teamRefresh); };
   }, [onDensity, addAlert, setWeather, addThreat, setTeams]);
 
-  const phase = density?.phase ?? "—";
-  const sim_min = density ? Math.round(density.sim_time_sec / 60) : 0;
+  const phase = density?.phase ?? "boot";
+  const simMin = density ? Math.round(density.sim_time_sec / 60) : 0;
   const peak = density?.zones?.length ? Math.max(...density.zones.map((z) => z.density_per_m2)) : 0;
+  const totalOcc = density?.zones?.reduce((s, z) => s + z.occupancy, 0) ?? 0;
+  const peakTone = peak >= 2 ? "critical" : peak >= 1 ? "warning" : "success";
 
   return (
-    <Box sx={{ height: "100vh", display: "grid", gridTemplateRows: "auto auto 1fr auto", gap: 1, p: 1 }}>
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ px: 1, flexWrap: "wrap", gap: 1 }}>
-        <Typography variant="h5">StadiumOps Command</Typography>
+    <Box sx={{
+      height: "100vh",
+      display: "grid",
+      gridTemplateRows: "auto auto 1fr auto",
+      gap: 1.25,
+      p: 1.25,
+      // Layered radial backdrop for command-center depth
+      background: `
+        radial-gradient(ellipse at 18% 0%, rgba(26,115,232,0.10), transparent 55%),
+        radial-gradient(ellipse at 82% 100%, rgba(217,48,37,0.08), transparent 55%),
+        #0A0D12
+      `,
+    }}>
+      {/* Top bar: venue header · forecast lens · what-if · KPIs · operator */}
+      <Stack direction="row" alignItems="center" sx={{
+        px: 1.25, py: 1.25,
+        bgcolor: "rgba(20,26,34,0.55)",
+        border: "1px solid rgba(232,234,237,0.07)",
+        borderRadius: 2,
+        backdropFilter: "blur(8px)",
+        gap: 2, flexWrap: "wrap",
+      }}>
+        <VenueHeader phase={phase} simMin={simMin} />
         <Box sx={{ flex: 1 }} />
-        <ForecastLens />
-        <WhatIfButton />
-        <KPIChip label="Phase" value={phase} />
-        <KPIChip label="Sim time (min)" value={sim_min} />
-        <KPIChip label="Peak density (ppl/m²)" value={peak.toFixed(2)}
-          tone={peak >= 2 ? "critical" : peak >= 1 ? "warning" : "success"} />
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <ForecastLens />
+          <WhatIfButton />
+        </Stack>
+        <Box sx={{ width: 1, height: 28, bgcolor: "divider" }} />
+        <Stack direction="row" spacing={1}>
+          <KPIChip label="Sim Time" value={`${simMin}m`} />
+          <KPIChip label="Occupancy" value={totalOcc.toLocaleString()} />
+          <KPIChip label="Peak Density" value={peak.toFixed(2)} unit="ppl/m²" tone={peakTone} />
+        </Stack>
+        <OperatorBadge />
       </Stack>
 
-      <Stack direction="row" spacing={1} sx={{ px: 1, pb: 1 }}>
-        <Typography variant="caption" sx={{ alignSelf: "center", color: "text.secondary", mr: 1 }}>
-          Demo:
-        </Typography>
-        {SCENES.map((s) => (
-          <Button key={s.name} size="small" variant="outlined" color={s.color}
-            onClick={() => api.runScene(s.name)}>
-            {s.label}
-          </Button>
-        ))}
-      </Stack>
+      {/* Scene rail */}
+      <Box sx={{
+        bgcolor: "rgba(20,26,34,0.4)",
+        border: "1px solid rgba(232,234,237,0.05)",
+        borderRadius: 2,
+        py: 1, px: 0.5,
+      }}>
+        <SceneRail />
+      </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 1, minHeight: 0 }}>
-        <Box sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", position: "relative", overflow: "hidden" }}>
+      {/* Main: twin canvas + drawer rail */}
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 1.25, minHeight: 0 }}>
+        <Box sx={{
+          borderRadius: 2,
+          border: "1px solid rgba(232,234,237,0.07)",
+          bgcolor: "#05080C",
+          position: "relative",
+          overflow: "hidden",
+          boxShadow: "inset 0 0 60px rgba(0,0,0,0.6)",
+        }}>
           <Scene />
         </Box>
-        <Stack spacing={1} sx={{ overflow: "auto", pr: 0.5 }}>
+        <Stack spacing={1.25} sx={{ overflow: "auto", pr: 0.5, minHeight: 0 }}>
           <ProtocolArmed />
           <AlertConsole />
           <AgentPane />
@@ -101,7 +130,13 @@ export default function Page() {
         </Stack>
       </Box>
 
-      <Stack direction="row" spacing={2} alignItems="center" sx={{ px: 2, py: 1 }}>
+      {/* Bottom: density legend + replay scrubber */}
+      <Stack direction="row" spacing={2} alignItems="center" sx={{
+        px: 1.5, py: 1,
+        bgcolor: "rgba(20,26,34,0.45)",
+        border: "1px solid rgba(232,234,237,0.05)",
+        borderRadius: 2,
+      }}>
         <DensityLegend />
         <Box sx={{ flex: 1 }} />
         <TimeScrubber />

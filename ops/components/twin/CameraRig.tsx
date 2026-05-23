@@ -10,16 +10,26 @@ export function CameraRig({ mode }: { mode: CameraMode }) {
 
   useEffect(() => {
     if (mode === "bird") {
-      camera.position.set(40, 110, 40);
+      camera.position.set(40, 160, 42);
       camera.lookAt(40, 0, 40);
     } else if (mode === "iso") {
-      camera.position.set(110, 70, 110);
-      camera.lookAt(40, 0, 40);
+      camera.position.set(150, 90, 150);
+      camera.lookAt(40, 4, 40);
     } else {
-      camera.position.set(40, 6, 110);
+      // Pitch-side cinematic
+      camera.position.set(40, 8, 130);
       camera.lookAt(40, 4, 40);
     }
   }, [mode, camera]);
 
-  return <OrbitControls target={[40, 0, 40]} enableDamping dampingFactor={0.1} />;
+  return (
+    <OrbitControls
+      target={[40, 4, 40]}
+      enableDamping
+      dampingFactor={0.12}
+      minDistance={40}
+      maxDistance={260}
+      maxPolarAngle={Math.PI / 2.05}
+    />
+  );
 }

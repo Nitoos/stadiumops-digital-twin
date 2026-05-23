@@ -18,10 +18,10 @@ export function Zones() {
   const horizon = useStore((s) => s.forecastHorizon);
 
   const zoneStates = useMemo(() => {
-    const m = new Map<string, string>();
+    const m = new Map<string, { color: string; los: string; density: number }>();
     for (const z of density?.zones ?? []) {
       const los = horizon === 0 ? z.los : horizon === 5 ? z.los_forecast_5m : horizon === 10 ? z.los_forecast_10m : z.los_forecast_15m;
-      m.set(z.zone_id, LOS_COLOR[los] ?? "#444");
+      m.set(z.zone_id, { color: LOS_COLOR[los] ?? "#444", los, density: z.density_per_m2 });
     }
     return m;
   }, [density, horizon]);
@@ -33,11 +33,29 @@ export function Zones() {
       {layout.zones.map((z) => {
         const shape = polyToShape(z.polygon);
         const geom = new THREE.ShapeGeometry(shape);
-        const color = zoneStates.get(z.id) ?? "#333";
+        const state = zoneStates.get(z.id);
+        const color = state?.color ?? "#2a2f38";
+
+        // Stands sit above the bowl (cap on roof); other zones on the apron
+        const isStand = z.type === "stand";
+        const yBase = isStand ? 14.1 : 0.12;
+        const opacity = horizon === 0 ? (isStand ? 0.55 : 0.6) : 0.32;
+
+        const isCritical = state?.los === "F" || state?.los === "E";
+
         return (
-          <mesh key={z.id} geometry={geom} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-            <meshStandardMaterial color={color} transparent opacity={horizon === 0 ? 0.7 : 0.45} />
-          </mesh>
+          <group key={z.id}>
+            {/* Filled overlay */}
+            <mesh geometry={geom} rotation={[-Math.PI / 2, 0, 0]} position={[0, yBase, 0]}>
+              <meshBasicMaterial color={color} transparent opacity={opacity} />
+            </mesh>
+            {/* Bright "lit" cap on critical stands */}
+            {isStand && isCritical && (
+              <mesh geometry={geom} rotation={[-Math.PI / 2, 0, 0]} position={[0, yBase + 0.4, 0]}>
+                <meshBasicMaterial color={color} transparent opacity={0.5} />
+              </mesh>
+            )}
+          </group>
         );
       })}
     </group>
