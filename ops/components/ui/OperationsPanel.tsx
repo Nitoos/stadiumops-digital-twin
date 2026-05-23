@@ -11,9 +11,16 @@ import { InboundPipeline } from "@/components/drawers/InboundPipeline";
 
 type TabKey = "protocols" | "alerts" | "agent" | "comms" | "teams" | "inbound";
 
+// Natural reading order: observation → response → support
+//   Alerts     — what is happening
+//   Protocols  — what to do about it
+//   AI Agent   — get a recommendation
+//   Comms      — broadcast to fans
+//   Teams      — dispatch field staff
+//   Inbound    — pre-match flow
 const TAB_META: { key: TabKey; label: string; icon: string }[] = [
-  { key: "protocols", label: "Protocols", icon: "policy" },
   { key: "alerts",    label: "Alerts",    icon: "notifications_active" },
+  { key: "protocols", label: "Protocols", icon: "policy" },
   { key: "agent",     label: "AI Agent",  icon: "auto_awesome" },
   { key: "comms",     label: "Comms",     icon: "campaign" },
   { key: "teams",     label: "Teams",     icon: "groups" },
@@ -22,7 +29,7 @@ const TAB_META: { key: TabKey; label: string; icon: string }[] = [
 
 export function OperationsPanel() {
   const alerts = useStore((s) => s.alerts);
-  const [tab, setTab] = useState<TabKey>("protocols");
+  const [tab, setTab] = useState<TabKey>("alerts");
   const criticalCount = alerts.filter((a) => a.severity === "critical").length;
 
   // Auto-switch to Alerts when a critical alert arrives
