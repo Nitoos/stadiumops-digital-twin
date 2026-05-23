@@ -1,0 +1,43 @@
+{
+  "venue": {
+    "id": "chinnaswamy",
+    "name": "M. Chinnaswamy Stadium",
+    "city": "Bengaluru",
+    "capacity": 40000,
+    "center": [12.9788, 77.5996]
+  },
+  "zones": [
+    {"id": "stand_a", "name": "Stand A (East)", "type": "stand", "capacity": 8000, "area_m2": 1600, "polygon": [[0,40],[40,40],[40,0],[0,0]]},
+    {"id": "stand_b", "name": "Stand B (North)", "type": "stand", "capacity": 8000, "area_m2": 1600, "polygon": [[0,80],[40,80],[40,40],[0,40]]},
+    {"id": "stand_c", "name": "Stand C (West)", "type": "stand", "capacity": 8000, "area_m2": 1600, "polygon": [[40,80],[80,80],[80,40],[40,40]]},
+    {"id": "stand_d", "name": "Stand D (South)", "type": "stand", "capacity": 8000, "area_m2": 1600, "polygon": [[40,40],[80,40],[80,0],[40,0]]},
+    {"id": "concourse_n", "name": "Concourse North", "type": "concourse", "capacity": 1200, "area_m2": 600, "polygon": [[0,90],[80,90],[80,80],[0,80]]},
+    {"id": "concourse_s", "name": "Concourse South", "type": "concourse", "capacity": 1200, "area_m2": 600, "polygon": [[0,0],[80,0],[80,-10],[0,-10]]},
+    {"id": "concourse_e", "name": "Concourse East", "type": "concourse", "capacity": 800, "area_m2": 400, "polygon": [[-10,80],[0,80],[0,0],[-10,0]]},
+    {"id": "concourse_w", "name": "Concourse West", "type": "concourse", "capacity": 800, "area_m2": 400, "polygon": [[80,80],[90,80],[90,0],[80,0]]},
+    {"id": "food_court", "name": "Food Court", "type": "concession", "capacity": 400, "area_m2": 300, "polygon": [[-10,30],[-30,30],[-30,50],[-10,50]]},
+    {"id": "restroom_n", "name": "Restroom North", "type": "restroom", "capacity": 80, "area_m2": 100, "polygon": [[30,90],[50,90],[50,100],[30,100]]},
+    {"id": "restroom_s", "name": "Restroom South", "type": "restroom", "capacity": 80, "area_m2": 100, "polygon": [[30,-10],[50,-10],[50,-20],[30,-20]]}
+  ],
+  "gates": [
+    {"id": "gate_1", "name": "Gate 1", "stand": "stand_a", "position": [-10, 20], "capacity_per_min": 60, "status": "open"},
+    {"id": "gate_2", "name": "Gate 2", "stand": "stand_a", "position": [-10, 60], "capacity_per_min": 60, "status": "open"},
+    {"id": "gate_3", "name": "Gate 3", "stand": "stand_b", "position": [20, 90], "capacity_per_min": 60, "status": "open"},
+    {"id": "gate_4", "name": "Gate 4", "stand": "stand_b", "position": [60, 90], "capacity_per_min": 60, "status": "open"},
+    {"id": "gate_5", "name": "Gate 5", "stand": "stand_c", "position": [90, 60], "capacity_per_min": 60, "status": "open"},
+    {"id": "gate_6", "name": "Gate 6", "stand": "stand_c", "position": [90, 20], "capacity_per_min": 60, "status": "closed"},
+    {"id": "gate_7", "name": "Gate 7", "stand": "stand_d", "position": [60, -10], "capacity_per_min": 60, "status": "open"},
+    {"id": "gate_8", "name": "Gate 8", "stand": "stand_d", "position": [20, -10], "capacity_per_min": 60, "status": "open"}
+  ],
+  "aeds": [
+    {"id": "aed_1", "position": [10, 85]},
+    {"id": "aed_2", "position": [70, 85]},
+    {"id": "aed_3", "position": [10, -5]},
+    {"id": "aed_4", "position": [70, -5]}
+  ],
+  "transit": [
+    {"id": "metro_mg_road", "name": "MG Road Metro", "distance_m": 600, "modes": ["walk"]},
+    {"id": "metro_cubbon_park", "name": "Cubbon Park Metro", "distance_m": 800, "modes": ["walk"]},
+    {"id": "parking_north", "name": "North Parking", "distance_m": 200, "capacity": 800, "modes": ["walk"]}
+  ]
+}
