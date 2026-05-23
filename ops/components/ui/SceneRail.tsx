@@ -3,49 +3,42 @@ import { Box, ButtonBase, Stack, Typography } from "@mui/material";
 import { api } from "@/lib/api";
 
 const SCENES = [
-  { name: "entry_surge", label: "Entry surge",  icon: "groups", accent: "#F28B82" },
-  { name: "storm",       label: "Storm",         icon: "bolt",   accent: "#FDD663" },
-  { name: "drone_threat", label: "Drone threat", icon: "warning", accent: "#C58AF9" },
-  { name: "exit_surge",  label: "Exit surge",    icon: "logout", accent: "#81C995" },
+  { name: "entry_surge",  label: "Entry surge",  icon: "groups",  color: "#D93025", bg: "#FCE8E6" },
+  { name: "storm",        label: "Storm",        icon: "bolt",    color: "#F29900", bg: "#FEF7E0" },
+  { name: "drone_threat", label: "Drone threat", icon: "warning", color: "#7627BB", bg: "#F3E8FD" },
+  { name: "exit_surge",   label: "Exit surge",   icon: "logout",  color: "#1E8E3E", bg: "#E6F4EA" },
 ];
 
 export function SceneRail() {
   return (
-    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ px: 1 }}>
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap" }}>
       <Typography sx={{
-        fontSize: 9, letterSpacing: 1.6, fontWeight: 700,
-        color: "text.disabled", textTransform: "uppercase",
-        fontFamily: "Roboto Mono, monospace",
-        mr: 0.5,
+        fontSize: 11, letterSpacing: 0.5, fontWeight: 500,
+        color: "text.secondary", textTransform: "uppercase",
+        mr: 1,
       }}>
-        Demo Scenes
+        Demo scenes
       </Typography>
       {SCENES.map((s) => (
         <ButtonBase
           key={s.name}
           onClick={() => api.runScene(s.name)}
           sx={{
-            borderRadius: 1.5,
-            px: 1.5, py: 0.85,
-            border: "1px solid rgba(232,234,237,0.08)",
-            bgcolor: "rgba(20,26,34,0.5)",
-            display: "flex", alignItems: "center", gap: 0.9,
-            transition: "all 180ms ease",
+            borderRadius: 999,
+            px: 1.5, py: 0.6,
+            bgcolor: "#FFFFFF",
+            border: "1px solid",
+            borderColor: "divider",
+            display: "flex", alignItems: "center", gap: 0.75,
+            transition: "all 160ms ease",
             "&:hover": {
-              borderColor: s.accent,
-              bgcolor: "rgba(20,26,34,0.85)",
-              boxShadow: `0 0 16px ${s.accent}40`,
+              bgcolor: s.bg,
+              borderColor: s.color,
             },
           }}
         >
-          <Box sx={{
-            width: 8, height: 8, borderRadius: "50%",
-            bgcolor: s.accent, boxShadow: `0 0 6px ${s.accent}`,
-          }} />
-          <Typography sx={{
-            fontSize: 12, fontWeight: 600, letterSpacing: 0.2,
-            color: "text.primary",
-          }}>
+          <Box className="material-symbols-sharp" sx={{ fontSize: 16, color: s.color }}>{s.icon}</Box>
+          <Typography sx={{ fontSize: 12, fontWeight: 500, color: "text.primary" }}>
             {s.label}
           </Typography>
         </ButtonBase>

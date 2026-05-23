@@ -1,19 +1,12 @@
 "use client";
 import { Stack, Typography, Box } from "@mui/material";
 import { Drawer } from "@/components/ui/Drawer";
-import { StatusDot } from "@/components/ui/StatusDot";
 import { useStore } from "@/lib/store";
 
-const TONE: Record<string, "critical" | "warning" | "idle"> = {
-  critical: "critical",
-  warning: "warning",
-  info: "idle",
-};
-
-const COLORS: Record<string, string> = {
-  critical: "#F28B82",
-  warning: "#FDD663",
-  info: "#9AA0A6",
+const STYLES: Record<string, { bg: string; border: string; color: string; label: string }> = {
+  critical: { bg: "#FCE8E6", border: "#D93025", color: "#B31412", label: "Critical" },
+  warning:  { bg: "#FEF7E0", border: "#F29900", color: "#B26A00", label: "Warning" },
+  info:     { bg: "#E8F0FE", border: "#1A73E8", color: "#1557B0", label: "Info" },
 };
 
 export function AlertConsole() {
@@ -22,50 +15,42 @@ export function AlertConsole() {
   const tone = criticalCount > 0 ? "critical" : alerts.length > 0 ? "warning" : "idle";
 
   return (
-    <Drawer title="Alert Console" tone={tone} badge={alerts.length === 0 ? "ALL CLEAR" : `${alerts.length} ACTIVE`}>
+    <Drawer title="Alert console" tone={tone} badge={alerts.length === 0 ? "All clear" : `${alerts.length} active`}>
       {alerts.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.disabled", fontSize: 12, py: 1 }}>
-          No active alerts. Monitoring all zones.
-        </Typography>
+        <Box sx={{ py: 3, textAlign: "center" }}>
+          <Box className="material-symbols-sharp" sx={{ fontSize: 32, color: "text.disabled" }}>check_circle</Box>
+          <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
+            All zones nominal. Monitoring live.
+          </Typography>
+        </Box>
       ) : (
-        <Stack spacing={0.75}>
+        <Stack spacing={1}>
           {alerts.slice(0, 6).map((a) => {
-            const color = COLORS[a.severity];
+            const s = STYLES[a.severity] ?? STYLES.info;
             return (
               <Box key={a.id} sx={{
-                p: 1,
-                borderRadius: 1.25,
-                bgcolor: "rgba(20,26,34,0.6)",
-                borderLeft: `3px solid ${color}`,
-                "&:hover": { bgcolor: "rgba(20,26,34,0.85)" },
+                p: 1.5,
+                borderRadius: 1.5,
+                bgcolor: s.bg,
+                borderLeft: `3px solid ${s.border}`,
               }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.25 }}>
-                  <Stack direction="row" alignItems="center" spacing={0.6}>
-                    <StatusDot tone={TONE[a.severity]} size={6} />
-                    <Typography sx={{
-                      fontSize: 10, letterSpacing: 1.1, fontWeight: 700,
-                      color, textTransform: "uppercase",
-                      fontFamily: "Roboto Mono, monospace",
-                    }}>
-                      {a.severity}
-                    </Typography>
-                  </Stack>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5 }}>
                   <Typography sx={{
-                    fontSize: 10, letterSpacing: 0.5,
-                    color: "text.disabled", fontFamily: "Roboto Mono, monospace",
+                    fontSize: 11, fontWeight: 500, letterSpacing: 0.3,
+                    color: s.color, textTransform: "uppercase",
                   }}>
+                    {s.label}
+                  </Typography>
+                  <Typography sx={{ fontSize: 11, color: "text.secondary", fontWeight: 500 }}>
                     {a.zone_id ?? "—"}
                   </Typography>
                 </Stack>
-                <Typography sx={{ fontSize: 12, color: "text.primary", lineHeight: 1.4 }}>
+                <Typography sx={{ fontSize: 13, color: "text.primary", lineHeight: 1.45 }}>
                   {a.reason}
                 </Typography>
                 {a.density_per_m2 !== undefined && (
-                  <Typography sx={{
-                    fontSize: 10, color: "text.secondary",
-                    fontFamily: "Roboto Mono, monospace", letterSpacing: 0.3, mt: 0.25,
-                  }}>
-                    LOS <b style={{ color: "#F1F3F4" }}>{a.los}</b> · {a.density_per_m2.toFixed(2)} ppl/m²
+                  <Typography sx={{ fontSize: 11, color: "text.secondary", mt: 0.5 }}>
+                    LOS <Box component="span" sx={{ fontWeight: 600, color: "text.primary" }}>{a.los}</Box> · {a.density_per_m2.toFixed(2)} ppl/m²
                   </Typography>
                 )}
               </Box>

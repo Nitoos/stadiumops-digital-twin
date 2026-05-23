@@ -2,54 +2,71 @@
 import { createTheme } from "@mui/material/styles";
 
 /**
- * StadiumOps Command — Material Design 3, command-centre idiom.
- * Tonal layering: surface ladder from #0A0D12 → #1F2630 to read at a glance.
- * Accents: Google blue/green/amber/red, with a calmer text scale than default.
+ * StadiumOps Command — Google light theme (Cloud Console / Workspace idiom).
+ *
+ * Surface ladder:
+ *   page:    #F8F9FA (Google grey 50)
+ *   card:    #FFFFFF
+ *   raised:  white + elevation 1/2
+ *
+ * Elevation uses Google's three-shadow recipe (no flat borders for primary surfaces).
+ * Type uses Google Sans Display for headlines + Google Sans Text / Roboto Flex body.
  */
 export const opsTheme = createTheme({
   cssVariables: true,
   palette: {
-    mode: "dark",
-    primary: { main: "#8AB4F8", dark: "#1A73E8", light: "#AECBFA", contrastText: "#0B1220" },
-    secondary: { main: "#81C995", dark: "#0F9D58", light: "#A8DAB5", contrastText: "#0B1220" },
-    warning: { main: "#FDD663", dark: "#F9AB00", light: "#FEEFC3" },
-    error: { main: "#F28B82", dark: "#D93025", light: "#FAD2CF" },
-    success: { main: "#81C995" },
-    info: { main: "#78D9EC" },
-    background: { default: "#0A0D12", paper: "#141A22" },
-    text: { primary: "#F1F3F4", secondary: "#9AA0A6", disabled: "#5F6368" },
-    divider: "rgba(232,234,237,0.08)",
+    mode: "light",
+    primary: { main: "#1A73E8", dark: "#1557B0", light: "#4285F4", contrastText: "#FFFFFF" },
+    secondary: { main: "#1E8E3E", dark: "#137333", light: "#34A853", contrastText: "#FFFFFF" },
+    warning: { main: "#F29900", dark: "#E37400", light: "#FBBC04" },
+    error: { main: "#D93025", dark: "#B31412", light: "#EA4335" },
+    success: { main: "#1E8E3E" },
+    info: { main: "#1A73E8" },
+    background: { default: "#F8F9FA", paper: "#FFFFFF" },
+    text: { primary: "#202124", secondary: "#5F6368", disabled: "#80868B" },
+    divider: "rgba(60,64,67,0.12)",
   },
   typography: {
-    fontFamily: '"Google Sans Text","Roboto Flex","Inter",system-ui,sans-serif',
-    h1: { fontFamily: '"Google Sans Display","Inter",sans-serif', fontWeight: 600, letterSpacing: -0.5 },
-    h2: { fontFamily: '"Google Sans Display","Inter",sans-serif', fontWeight: 600, letterSpacing: -0.4 },
-    h3: { fontFamily: '"Google Sans Display","Inter",sans-serif', fontWeight: 600, letterSpacing: -0.3 },
-    h4: { fontFamily: '"Google Sans Display","Inter",sans-serif', fontWeight: 600, letterSpacing: -0.2 },
-    h5: { fontFamily: '"Google Sans Display","Inter",sans-serif', fontWeight: 600, letterSpacing: -0.1 },
-    h6: { fontFamily: '"Google Sans Display","Inter",sans-serif', fontWeight: 600 },
-    subtitle1: { fontWeight: 600, letterSpacing: 0.1 },
-    subtitle2: { fontWeight: 600, letterSpacing: 0.1 },
-    body1: { letterSpacing: 0.1 },
-    body2: { letterSpacing: 0.15, lineHeight: 1.5 },
-    overline: { letterSpacing: 1.5, fontWeight: 600, fontSize: 10, color: "#9AA0A6" },
-    button: { textTransform: "none", fontWeight: 600, letterSpacing: 0.2 },
-    caption: { letterSpacing: 0.3, fontSize: 11 },
+    fontFamily: '"Google Sans Text","Roboto Flex","Roboto","Inter",system-ui,sans-serif',
+    h1: { fontFamily: '"Google Sans Display","Roboto",sans-serif', fontWeight: 500, letterSpacing: -0.5 },
+    h2: { fontFamily: '"Google Sans Display","Roboto",sans-serif', fontWeight: 500, letterSpacing: -0.4 },
+    h3: { fontFamily: '"Google Sans Display","Roboto",sans-serif', fontWeight: 500, letterSpacing: -0.3 },
+    h4: { fontFamily: '"Google Sans Display","Roboto",sans-serif', fontWeight: 500, letterSpacing: -0.2 },
+    h5: { fontFamily: '"Google Sans Display","Roboto",sans-serif', fontWeight: 500, letterSpacing: -0.1 },
+    h6: { fontFamily: '"Google Sans Display","Roboto",sans-serif', fontWeight: 500 },
+    subtitle1: { fontWeight: 500 },
+    subtitle2: { fontWeight: 500 },
+    body1: { letterSpacing: 0.15, color: "#202124" },
+    body2: { letterSpacing: 0.2, lineHeight: 1.5, color: "#5F6368" },
+    overline: { letterSpacing: 1.4, fontWeight: 500, fontSize: 11, color: "#5F6368" },
+    button: { textTransform: "none", fontWeight: 500, letterSpacing: 0.2 },
+    caption: { letterSpacing: 0.3, fontSize: 12, color: "#5F6368" },
   },
   shape: { borderRadius: 12 },
   components: {
-    MuiButton: { defaultProps: { disableElevation: true } },
+    MuiButton: {
+      defaultProps: { disableElevation: true },
+      styleOverrides: {
+        root: { borderRadius: 999, paddingInline: 16, paddingBlock: 6, minHeight: 36 },
+        outlined: { borderColor: "rgba(60,64,67,0.18)", "&:hover": { borderColor: "rgba(60,64,67,0.32)", backgroundColor: "rgba(60,64,67,0.04)" } },
+        text: { "&:hover": { backgroundColor: "rgba(60,64,67,0.04)" } },
+      },
+    },
     MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
-    MuiChip: { styleOverrides: { root: { fontWeight: 600, letterSpacing: 0.3 } } },
+    MuiChip: { styleOverrides: { root: { fontWeight: 500, letterSpacing: 0.2 } } },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          boxShadow: "0 1px 2px 0 rgba(60,64,67,0.10), 0 1px 3px 1px rgba(60,64,67,0.06)",
+          borderRadius: 12,
+        },
+      },
+    },
+    MuiTab: { styleOverrides: { root: { textTransform: "none", fontWeight: 500, minHeight: 44, letterSpacing: 0.15 } } },
+    MuiTabs: { styleOverrides: { indicator: { height: 3, borderRadius: "3px 3px 0 0" } } },
     MuiCssBaseline: {
       styleOverrides: {
-        body: {
-          // Subtle dot-grid texture for "telemetry" feel
-          backgroundImage:
-            "radial-gradient(rgba(138,180,248,0.035) 1px, transparent 1px)",
-          backgroundSize: "18px 18px",
-          backgroundPosition: "0 0",
-        },
+        body: { backgroundColor: "#F8F9FA" },
       },
     },
   },

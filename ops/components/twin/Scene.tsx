@@ -1,9 +1,8 @@
 "use client";
 import { Canvas } from "@react-three/fiber";
-import { Environment, Sky } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import { EffectComposer, Vignette } from "@react-three/postprocessing";
 import { useState } from "react";
-import { Box, ToggleButton, ToggleButtonGroup, Stack } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup, Stack, Typography } from "@mui/material";
 import { Stadium } from "./Stadium";
 import { CameraRig, type CameraMode } from "./CameraRig";
 import { Zones } from "./Zones";
@@ -22,29 +21,28 @@ export function Scene() {
   return (
     <Box sx={{ position: "absolute", inset: 0 }}>
       <Canvas shadows dpr={[1, 2]} camera={{ fov: 38, near: 0.5, far: 600 }}>
-        {/* Night sky background */}
-        <color attach="background" args={["#05080C"]} />
-        <fog attach="fog" args={["#05080C", 180, 320]} />
+        {/* Daytime sky — Google blue gradient */}
+        <color attach="background" args={["#E8F0FE"]} />
+        <fog attach="fog" args={["#E8F0FE", 220, 380]} />
 
-        {/* Subtle key + ambient lighting (floodlights from Stadium add their own pointlights) */}
-        <hemisphereLight args={["#B7CDEB", "#1A1F2A", 0.35]} />
-        <ambientLight intensity={0.2} />
+        {/* Soft daylight */}
+        <hemisphereLight args={["#FFFFFF", "#DADCE0", 0.8]} />
+        <ambientLight intensity={0.45} />
         <directionalLight
-          position={[120, 160, 80]}
-          intensity={1.1}
+          position={[140, 200, 100]}
+          intensity={1.25}
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
-          shadow-camera-left={-150}
-          shadow-camera-right={150}
-          shadow-camera-top={150}
-          shadow-camera-bottom={-150}
+          shadow-camera-left={-180}
+          shadow-camera-right={180}
+          shadow-camera-top={180}
+          shadow-camera-bottom={-180}
           shadow-camera-near={1}
-          shadow-camera-far={400}
-          color="#D8E3FF"
+          shadow-camera-far={500}
+          color="#FFFFFF"
         />
-        {/* Cool rim light from opposite side */}
-        <directionalLight position={[-80, 60, -40]} intensity={0.35} color="#7EA7FF" />
+        <directionalLight position={[-100, 80, -60]} intensity={0.35} color="#C2D4F3" />
 
         <Stadium />
         <Zones />
@@ -54,17 +52,16 @@ export function Scene() {
         <CameraRig mode={mode} />
 
         <EffectComposer multisampling={4}>
-          <Bloom intensity={0.65} luminanceThreshold={0.65} luminanceSmoothing={0.2} mipmapBlur />
-          <Vignette eskil={false} offset={0.18} darkness={0.55} />
+          <Vignette eskil={false} offset={0.25} darkness={0.32} />
         </EffectComposer>
       </Canvas>
 
-      {/* Camera mode toggle — glass pill */}
+      {/* Camera mode toggle — light pill */}
       <Box sx={{
         position: "absolute", top: 12, right: 12,
-        bgcolor: "rgba(15,17,21,0.72)",
-        backdropFilter: "blur(10px)",
-        border: "1px solid rgba(232,234,237,0.12)",
+        bgcolor: "rgba(255,255,255,0.96)",
+        backdropFilter: "blur(8px)",
+        boxShadow: "0 1px 2px rgba(60,64,67,0.2), 0 1px 3px rgba(60,64,67,0.1)",
         borderRadius: "999px",
         px: 0.5, py: 0.5,
       }}>
@@ -73,10 +70,14 @@ export function Scene() {
           onChange={(_, v) => v && setMode(v)}
           sx={{
             "& .MuiToggleButton-root": {
-              border: 0, color: "text.secondary",
-              borderRadius: "999px", px: 1.5,
-              fontFamily: '"Google Sans Text", sans-serif', fontWeight: 600, fontSize: 12, letterSpacing: 0.5,
-              "&.Mui-selected": { bgcolor: "primary.main", color: "#0B1220", "&:hover": { bgcolor: "primary.main" } },
+              border: 0, color: "#5F6368",
+              borderRadius: "999px", px: 1.75, py: 0.4,
+              fontFamily: '"Google Sans Text", sans-serif', fontWeight: 500, fontSize: 12, letterSpacing: 0.2,
+              "&.Mui-selected": {
+                bgcolor: "#E8F0FE",
+                color: "#1A73E8",
+                "&:hover": { bgcolor: "#D2E3FC" },
+              },
             },
           }}
         >
@@ -86,19 +87,22 @@ export function Scene() {
         </ToggleButtonGroup>
       </Box>
 
-      {/* Coords / scale ticker bottom-left */}
-      <Stack direction="row" spacing={1} sx={{
+      {/* Venue chip bottom-left */}
+      <Stack direction="row" spacing={1} alignItems="center" sx={{
         position: "absolute", bottom: 12, left: 12,
-        bgcolor: "rgba(15,17,21,0.72)", backdropFilter: "blur(10px)",
-        border: "1px solid rgba(232,234,237,0.10)", borderRadius: 1,
-        px: 1.25, py: 0.5, color: "text.secondary",
-        fontFamily: "Roboto Mono, monospace", fontSize: 11, letterSpacing: 0.5,
+        bgcolor: "rgba(255,255,255,0.96)",
+        boxShadow: "0 1px 2px rgba(60,64,67,0.2), 0 1px 3px rgba(60,64,67,0.1)",
+        borderRadius: 1.25,
+        px: 1.25, py: 0.5,
       }}>
-        <span>VENUE / CHINNASWAMY</span>
-        <span style={{ opacity: 0.4 }}>·</span>
-        <span>SCALE 1:1</span>
-        <span style={{ opacity: 0.4 }}>·</span>
-        <span style={{ color: "#81C995" }}>● LIVE</span>
+        <Box sx={{
+          width: 6, height: 6, borderRadius: "50%",
+          bgcolor: "#1E8E3E",
+          boxShadow: "0 0 6px rgba(30,142,62,0.6)",
+        }} />
+        <Typography sx={{ fontSize: 12, fontWeight: 500, color: "#202124" }}>
+          M. Chinnaswamy Stadium · LIVE
+        </Typography>
       </Stack>
     </Box>
   );

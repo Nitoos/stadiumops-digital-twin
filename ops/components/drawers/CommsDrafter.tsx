@@ -27,39 +27,69 @@ export function CommsDrafter() {
   }
 
   return (
-    <Drawer title="Comms drafter">
-      <Stack spacing={1}>
-        <TextField size="small" label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <TextField size="small" label="Body" multiline rows={2} value={body} onChange={(e) => setBody(e.target.value)} />
+    <Drawer title="Comms drafter" tone="idle">
+      <Stack spacing={1.25}>
+        <TextField
+          size="small" label="Title" fullWidth
+          value={title} onChange={(e) => setTitle(e.target.value)}
+          InputProps={{ sx: { fontSize: 13 } }}
+        />
+        <TextField
+          size="small" label="Body" multiline rows={2} fullWidth
+          value={body} onChange={(e) => setBody(e.target.value)}
+          InputProps={{ sx: { fontSize: 13 } }}
+        />
         <Box>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>Sections (sub-group stagger):</Typography>
-          <Stack direction="row" spacing={0.5} sx={{ mt: 0.5, flexWrap: "wrap", gap: 0.5 }}>
+          <Typography sx={{
+            fontSize: 11, color: "text.secondary", mb: 0.5,
+            letterSpacing: 0.3, textTransform: "uppercase", fontWeight: 500,
+          }}>
+            Sections · sub-group stagger
+          </Typography>
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", gap: 0.5 }}>
             {STAND_OPTIONS.map((s) => (
-              <Chip key={s} size="small" label={s} clickable
+              <Chip key={s} size="small" label={s.replace("_", " ").toUpperCase()} clickable
                 color={sections.includes(s) ? "primary" : "default"}
+                variant={sections.includes(s) ? "filled" : "outlined"}
                 onClick={() => toggle(sections, setSections, s)} />
             ))}
           </Stack>
         </Box>
         <Box>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>Channels:</Typography>
-          <Stack direction="row" spacing={0.5} sx={{ mt: 0.5, flexWrap: "wrap", gap: 0.5 }}>
+          <Typography sx={{
+            fontSize: 11, color: "text.secondary", mb: 0.5,
+            letterSpacing: 0.3, textTransform: "uppercase", fontWeight: 500,
+          }}>
+            Channels
+          </Typography>
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", gap: 0.5 }}>
             {CHANNELS.map((c) => (
               <Chip key={c} size="small" label={c} clickable
                 color={channels.includes(c) ? "secondary" : "default"}
+                variant={channels.includes(c) ? "filled" : "outlined"}
                 onClick={() => toggle(channels, setChannels, c)} />
             ))}
           </Stack>
         </Box>
-        <TextField size="small" type="number" label="Sub-group stagger (sec)"
-          value={stagger} onChange={(e) => setStagger(Number(e.target.value))} />
-        <Button size="small" variant="contained" color="secondary" onClick={send}>
-          Approve + broadcast
+        <TextField
+          size="small" type="number" label="Sub-group stagger (sec)"
+          value={stagger} onChange={(e) => setStagger(Number(e.target.value))}
+          InputProps={{ sx: { fontSize: 13 } }}
+        />
+        <Button size="small" variant="contained" color="secondary" onClick={send}
+          startIcon={<Box className="material-symbols-sharp" sx={{ fontSize: 18 }}>send</Box>}
+        >
+          Approve & broadcast
         </Button>
         {sentId && (
-          <Typography variant="caption" sx={{ color: "success.main", fontFamily: "Roboto Mono" }}>
-            Broadcast {sentId.slice(0, 8)} sent.
-          </Typography>
+          <Stack direction="row" spacing={0.75} alignItems="center" sx={{
+            p: 1, bgcolor: "#E6F4EA", borderRadius: 1,
+          }}>
+            <Box className="material-symbols-sharp" sx={{ fontSize: 16, color: "#1E8E3E" }}>check_circle</Box>
+            <Typography sx={{ fontSize: 12, color: "#137333" }}>
+              Broadcast {sentId.slice(0, 8)} sent
+            </Typography>
+          </Stack>
         )}
       </Stack>
     </Drawer>

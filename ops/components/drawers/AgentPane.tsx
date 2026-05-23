@@ -16,90 +16,71 @@ export function AgentPane() {
   }
 
   return (
-    <Drawer title="AI Agent · Gemini 2.0" tone={rec ? "live" : "idle"} badge={rec ? "READY" : "AWAITING CTX"}>
-      <Stack spacing={1}>
+    <Drawer title="AI Agent · Gemini 2.0" tone={rec ? "live" : "idle"} badge={rec ? "Ready" : "Awaiting context"}>
+      <Stack spacing={1.25}>
         <TextField
-          multiline rows={2} size="small"
+          multiline rows={3} size="small" fullWidth
           value={ctx}
           onChange={(e) => setCtx(e.target.value)}
-          InputProps={{
-            sx: {
-              fontSize: 12, fontFamily: "Roboto Mono, monospace",
-              bgcolor: "rgba(10,13,18,0.6)",
-            },
-          }}
+          placeholder="Describe current ops context…"
+          InputProps={{ sx: { fontSize: 13, bgcolor: "#F8F9FA" } }}
         />
         <Button
           size="small" variant="contained" onClick={ask} disabled={loading}
-          sx={{
-            py: 0.75,
-            background: "linear-gradient(135deg, #8AB4F8, #C58AF9)",
-            color: "#0B1220",
-            "&:hover": {
-              background: "linear-gradient(135deg, #AECBFA, #D7B3FB)",
-              boxShadow: "0 0 16px rgba(138,180,248,0.5)",
-            },
-          }}
+          startIcon={<Box className="material-symbols-sharp" sx={{ fontSize: 18 }}>auto_awesome</Box>}
         >
-          {loading ? "Thinking…" : "Ask Agent"}
+          {loading ? "Thinking…" : "Ask agent"}
         </Button>
         {loading && <LinearProgress sx={{ borderRadius: 1 }} />}
         {rec && (
           <Box sx={{
-            p: 1.25,
-            borderRadius: 1.25,
-            bgcolor: "rgba(138,180,248,0.06)",
-            border: "1px solid rgba(138,180,248,0.25)",
-            position: "relative",
+            p: 1.75,
+            borderRadius: 1.5,
+            bgcolor: "#E8F0FE",
+            border: "1px solid #4285F440",
           }}>
-            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 0.5 }}>
+            <Stack direction="row" alignItems="flex-start" spacing={1} sx={{ mb: 0.75 }}>
               <Box sx={{
-                width: 18, height: 18, borderRadius: 0.75,
-                background: "linear-gradient(135deg, #8AB4F8, #C58AF9)",
+                width: 22, height: 22, borderRadius: 0.75, flexShrink: 0,
+                background: "linear-gradient(135deg, #4285F4, #C58AF9)",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                <Box className="material-symbols-sharp" sx={{ fontSize: 12, color: "#0B1220" }}>auto_awesome</Box>
+                <Box className="material-symbols-sharp" sx={{ fontSize: 14, color: "#FFFFFF" }}>auto_awesome</Box>
               </Box>
               <Typography sx={{
-                fontSize: 13, fontWeight: 600,
+                fontSize: 14, fontWeight: 500,
                 fontFamily: '"Google Sans Display", sans-serif',
-                color: "text.primary",
+                color: "text.primary", lineHeight: 1.3,
               }}>
                 {rec.title}
               </Typography>
             </Stack>
-            <Typography sx={{ fontSize: 12, color: "text.secondary", lineHeight: 1.5, mb: 0.75 }}>
+            <Typography sx={{ fontSize: 13, color: "text.secondary", lineHeight: 1.5, mb: 1 }}>
               {rec.rationale}
             </Typography>
-            <Stack spacing={0.25}>
+            <Stack spacing={0.5}>
               {rec.actions.map((a, i) => (
-                <Typography key={i} sx={{ fontSize: 11.5, color: "text.primary" }}>
-                  <Box component="span" sx={{ color: "primary.main", fontFamily: "Roboto Mono, monospace", mr: 0.5 }}>
-                    →
-                  </Box>
-                  {a}
-                </Typography>
+                <Stack key={i} direction="row" alignItems="flex-start" spacing={0.75}>
+                  <Box sx={{ color: "primary.main", fontSize: 13, fontWeight: 600 }}>→</Box>
+                  <Typography sx={{ fontSize: 12.5, color: "text.primary", lineHeight: 1.45 }}>{a}</Typography>
+                </Stack>
               ))}
             </Stack>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1, pt: 0.75, borderTop: "1px solid rgba(138,180,248,0.15)" }}>
-              <Typography sx={{
-                fontSize: 9, letterSpacing: 1.2, fontWeight: 700,
-                color: "text.disabled", fontFamily: "Roboto Mono, monospace",
-              }}>
-                CONFIDENCE
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{
+              mt: 1.25, pt: 1, borderTop: "1px solid #4285F420",
+            }}>
+              <Typography sx={{ fontSize: 11, color: "text.secondary", fontWeight: 500 }}>
+                Confidence
               </Typography>
-              <Stack direction="row" alignItems="center" spacing={0.5}>
-                <Box sx={{ width: 60, height: 4, bgcolor: "rgba(138,180,248,0.15)", borderRadius: 2, overflow: "hidden" }}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Box sx={{ width: 80, height: 6, bgcolor: "#FFFFFF", borderRadius: 3, overflow: "hidden" }}>
                   <Box sx={{
                     height: "100%",
                     width: `${Math.round(rec.confidence * 100)}%`,
-                    background: "linear-gradient(90deg, #8AB4F8, #C58AF9)",
+                    bgcolor: "primary.main",
                   }} />
                 </Box>
-                <Typography sx={{
-                  fontSize: 11, fontWeight: 600,
-                  fontFamily: "Roboto Mono, monospace", color: "text.primary",
-                }}>
+                <Typography sx={{ fontSize: 12, fontWeight: 500, color: "text.primary" }}>
                   {Math.round(rec.confidence * 100)}%
                 </Typography>
               </Stack>

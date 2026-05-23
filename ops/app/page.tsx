@@ -1,25 +1,24 @@
 "use client";
-import { Box, Stack } from "@mui/material";
+import { Box, Card, Stack } from "@mui/material";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { wsClient } from "@/lib/ws";
 import { useStore } from "@/lib/store";
 import { DensityLegend } from "@/components/ui/DensityLegend";
-import { KPIChip } from "@/components/ui/KPIChip";
-import { VenueHeader } from "@/components/ui/VenueHeader";
-import { OperatorBadge } from "@/components/ui/OperatorBadge";
+import { KPICard } from "@/components/ui/KPICard";
+import { AppBar } from "@/components/ui/AppBar";
 import { SceneRail } from "@/components/ui/SceneRail";
 import { Scene } from "@/components/twin/Scene";
-import { AlertConsole } from "@/components/drawers/AlertConsole";
-import { ProtocolArmed } from "@/components/drawers/ProtocolArmed";
-import { AgentPane } from "@/components/drawers/AgentPane";
-import { CommsDrafter } from "@/components/drawers/CommsDrafter";
-import { DispatchBoard } from "@/components/drawers/DispatchBoard";
-import { InboundPipeline } from "@/components/drawers/InboundPipeline";
+import { OperationsPanel } from "@/components/ui/OperationsPanel";
 import { TimeScrubber } from "@/components/controls/TimeScrubber";
 import { ForecastLens } from "@/components/controls/ForecastLens";
 import { WhatIfButton } from "@/components/controls/WhatIfButton";
+
+function PhaseIcon() { return <Box className="material-symbols-sharp" sx={{ fontSize: 22 }}>schedule</Box>; }
+function TimerIcon() { return <Box className="material-symbols-sharp" sx={{ fontSize: 22 }}>timer</Box>; }
+function OccupancyIcon() { return <Box className="material-symbols-sharp" sx={{ fontSize: 22 }}>groups</Box>; }
+function DensityIcon() { return <Box className="material-symbols-sharp" sx={{ fontSize: 22 }}>density_medium</Box>; }
 
 export default function Page() {
   const setLayout = useStore((s) => s.setLayout);
@@ -59,88 +58,92 @@ export default function Page() {
   const peak = density?.zones?.length ? Math.max(...density.zones.map((z) => z.density_per_m2)) : 0;
   const totalOcc = density?.zones?.reduce((s, z) => s + z.occupancy, 0) ?? 0;
   const peakTone = peak >= 2 ? "critical" : peak >= 1 ? "warning" : "success";
+  const phaseLabel = phase === "pre" ? "Pre-match" : phase === "live" ? "Live" : phase === "break" ? "Break" : phase === "post" ? "Post-match" : "Boot";
 
   return (
     <Box sx={{
       height: "100vh",
       display: "grid",
-      gridTemplateRows: "auto auto 1fr auto",
-      gap: 1.25,
-      p: 1.25,
-      // Layered radial backdrop for command-center depth
-      background: `
-        radial-gradient(ellipse at 18% 0%, rgba(26,115,232,0.10), transparent 55%),
-        radial-gradient(ellipse at 82% 100%, rgba(217,48,37,0.08), transparent 55%),
-        #0A0D12
-      `,
+      gridTemplateRows: "auto 1fr",
+      bgcolor: "background.default",
     }}>
-      {/* Top bar: venue header · forecast lens · what-if · KPIs · operator */}
-      <Stack direction="row" alignItems="center" sx={{
-        px: 1.25, py: 1.25,
-        bgcolor: "rgba(20,26,34,0.55)",
-        border: "1px solid rgba(232,234,237,0.07)",
-        borderRadius: 2,
-        backdropFilter: "blur(8px)",
-        gap: 2, flexWrap: "wrap",
-      }}>
-        <VenueHeader phase={phase} simMin={simMin} />
-        <Box sx={{ flex: 1 }} />
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <ForecastLens />
-          <WhatIfButton />
-        </Stack>
-        <Box sx={{ width: 1, height: 28, bgcolor: "divider" }} />
-        <Stack direction="row" spacing={1}>
-          <KPIChip label="Sim Time" value={`${simMin}m`} />
-          <KPIChip label="Occupancy" value={totalOcc.toLocaleString()} />
-          <KPIChip label="Peak Density" value={peak.toFixed(2)} unit="ppl/m²" tone={peakTone} />
-        </Stack>
-        <OperatorBadge />
-      </Stack>
+      <AppBar phase={phase} simMin={simMin} />
 
-      {/* Scene rail */}
       <Box sx={{
-        bgcolor: "rgba(20,26,34,0.4)",
-        border: "1px solid rgba(232,234,237,0.05)",
-        borderRadius: 2,
-        py: 1, px: 0.5,
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) 420px",
+        gap: 2,
+        p: 2,
+        minHeight: 0,
+        overflow: "hidden",
       }}>
-        <SceneRail />
-      </Box>
+        {/* Left column: KPI strip + Twin */}
+        <Stack spacing={2} sx={{ minHeight: 0 }}>
+          {/* KPI strip — 4 hero stat cards */}
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 2,
+          }}>
+            <KPICard
+              icon={<PhaseIcon />}
+              label="Match phase"
+              value={phaseLabel}
+              hint={phase === "pre" ? "Inbound flow active" : "Live state"}
+            />
+            <KPICard
+              icon={<TimerIcon />}
+              label="Sim time"
+              value={`${simMin}m`}
+              hint="Since match T-90"
+            />
+            <KPICard
+              icon={<OccupancyIcon />}
+              label="Occupancy"
+              value={totalOcc.toLocaleString()}
+              unit="fans"
+              hint="Across all zones"
+            />
+            <KPICard
+              icon={<DensityIcon />}
+              label="Peak density"
+              value={peak.toFixed(2)}
+              unit="ppl/m²"
+              tone={peakTone}
+              hint={peak >= 2 ? "Crush risk" : peak >= 1 ? "Restricted flow" : "Free flow"}
+            />
+          </Box>
 
-      {/* Main: twin canvas + drawer rail */}
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: 1.25, minHeight: 0 }}>
-        <Box sx={{
-          borderRadius: 2,
-          border: "1px solid rgba(232,234,237,0.07)",
-          bgcolor: "#05080C",
-          position: "relative",
-          overflow: "hidden",
-          boxShadow: "inset 0 0 60px rgba(0,0,0,0.6)",
-        }}>
-          <Scene />
-        </Box>
-        <Stack spacing={1.25} sx={{ overflow: "auto", pr: 0.5, minHeight: 0 }}>
-          <ProtocolArmed />
-          <AlertConsole />
-          <AgentPane />
-          <CommsDrafter />
-          <DispatchBoard />
-          <InboundPipeline />
+          {/* Twin canvas */}
+          <Card sx={{
+            flex: 1, position: "relative", overflow: "hidden",
+            bgcolor: "#E8F0FE",
+            border: 0,
+            minHeight: 0,
+          }}>
+            <Scene />
+          </Card>
+
+          {/* Footer band — legend + controls + scrubber */}
+          <Card sx={{ p: 1.5, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+            <DensityLegend />
+            <Box sx={{ flex: 1 }} />
+            <ForecastLens />
+            <WhatIfButton />
+            <TimeScrubber />
+          </Card>
+
+          {/* Demo scene rail — last so it's discoverable but not intrusive */}
+          <Card sx={{ p: 1.5 }}>
+            <SceneRail />
+          </Card>
         </Stack>
-      </Box>
 
-      {/* Bottom: density legend + replay scrubber */}
-      <Stack direction="row" spacing={2} alignItems="center" sx={{
-        px: 1.5, py: 1,
-        bgcolor: "rgba(20,26,34,0.45)",
-        border: "1px solid rgba(232,234,237,0.05)",
-        borderRadius: 2,
-      }}>
-        <DensityLegend />
-        <Box sx={{ flex: 1 }} />
-        <TimeScrubber />
-      </Stack>
+        {/* Right column: Tabbed operations panel */}
+        <Box sx={{ minHeight: 0, display: "flex" }}>
+          <OperationsPanel />
+        </Box>
+      </Box>
     </Box>
   );
 }

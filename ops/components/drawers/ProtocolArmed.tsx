@@ -19,12 +19,9 @@ export function ProtocolArmed() {
   useEffect(() => {
     api.opsState().then((s: any) => setArmed(s.protocols_armed ?? []));
     const off = wsClient.on((e) => {
-      if (e.topic === "protocol.armed") {
-        setArmed((a) => [...a, e.payload]);
-      }
-      if (e.topic === "protocol.confirmed") {
-        setArmed((a) => a.map((p) => p.id === e.payload.id ? { ...p, confirmed_by: e.payload.confirmed_by } : p));
-      }
+      if (e.topic === "protocol.armed") setArmed((a) => [...a, e.payload]);
+      if (e.topic === "protocol.confirmed") setArmed((a) =>
+        a.map((p) => p.id === e.payload.id ? { ...p, confirmed_by: e.payload.confirmed_by } : p));
     });
     return () => { off(); };
   }, []);
@@ -46,55 +43,45 @@ export function ProtocolArmed() {
 
   return (
     <Drawer
-      title="Protocols Armed"
+      title="Protocols armed"
       tone={hasCritical ? "critical" : activeCount > 0 ? "warning" : "idle"}
-      badge={armed.length === 0 ? "STANDBY" : `${activeCount} PENDING`}
+      badge={armed.length === 0 ? "Standby" : `${activeCount} pending`}
     >
       {armed.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.disabled", fontSize: 12, py: 1 }}>
-          No protocols armed. Awaiting trigger.
-        </Typography>
+        <Box sx={{ py: 3, textAlign: "center" }}>
+          <Box className="material-symbols-sharp" sx={{ fontSize: 32, color: "text.disabled" }}>policy</Box>
+          <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
+            No protocols armed. Awaiting trigger.
+          </Typography>
+        </Box>
       ) : (
-        <Stack spacing={1}>
+        <Stack spacing={1.25}>
           {armed.map((p) => {
             const isCritical = p.severity === "critical";
             const confirmed = !!p.confirmed_by;
+            const accent = confirmed ? "#1E8E3E" : isCritical ? "#D93025" : "#F29900";
+            const bg = confirmed ? "#E6F4EA" : isCritical ? "#FCE8E6" : "#FEF7E0";
             return (
               <Box key={p.id} sx={{
-                p: 1.5,
+                p: 1.75,
                 borderRadius: 1.5,
-                position: "relative",
-                bgcolor: confirmed ? "rgba(129,201,149,0.04)" : isCritical ? "rgba(242,139,130,0.06)" : "rgba(253,214,99,0.04)",
+                bgcolor: bg,
                 border: "1px solid",
-                borderColor: confirmed ? "rgba(129,201,149,0.3)" : isCritical ? "rgba(242,139,130,0.4)" : "rgba(253,214,99,0.3)",
-                boxShadow: confirmed ? "none" : isCritical ? "0 0 22px rgba(242,139,130,0.15)" : "0 0 14px rgba(253,214,99,0.1)",
-                "&::before": !confirmed && isCritical ? {
-                  content: '""', position: "absolute", inset: -1, borderRadius: 1.5,
-                  background: "linear-gradient(90deg, transparent, rgba(242,139,130,0.18), transparent)",
-                  backgroundSize: "200% 100%",
-                  animation: "shimmer 2.5s linear infinite",
-                  pointerEvents: "none",
-                  "@keyframes shimmer": {
-                    "0%": { backgroundPosition: "-200% 0" },
-                    "100%": { backgroundPosition: "200% 0" },
-                  },
-                } : undefined,
+                borderColor: `${accent}40`,
               }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5 }}>
                   <Typography sx={{
                     fontFamily: '"Google Sans Display", sans-serif',
-                    fontSize: 13.5, fontWeight: 600,
-                    color: confirmed ? "text.secondary" : "text.primary",
+                    fontSize: 14, fontWeight: 500, color: "text.primary",
                   }}>
                     {p.name}
                   </Typography>
                   <Chip size="small" label={p.sop}
                     sx={{
-                      height: 18, fontSize: 9, fontFamily: "Roboto Mono, monospace",
-                      letterSpacing: 0.6,
-                      bgcolor: isCritical ? "rgba(242,139,130,0.18)" : "rgba(253,214,99,0.18)",
-                      color: isCritical ? "#F28B82" : "#FDD663",
-                      border: `1px solid ${isCritical ? "rgba(242,139,130,0.4)" : "rgba(253,214,99,0.4)"}`,
+                      height: 22, fontSize: 10, fontWeight: 500, letterSpacing: 0.3,
+                      bgcolor: "#FFFFFF",
+                      color: accent,
+                      border: `1px solid ${accent}40`,
                     }}
                   />
                 </Stack>
@@ -103,17 +90,17 @@ export function ProtocolArmed() {
                     const done = doneSteps[p.id]?.has(i) ?? false;
                     return (
                       <ListItem key={i} disablePadding onClick={() => toggleStep(p.id, i)}
-                        sx={{ cursor: "pointer", py: 0.15 }}>
-                        <ListItemIcon sx={{ minWidth: 26 }}>
+                        sx={{ cursor: "pointer", py: 0.25 }}>
+                        <ListItemIcon sx={{ minWidth: 28 }}>
                           {done
-                            ? <CheckBoxIcon fontSize="small" sx={{ fontSize: 16, color: "#81C995" }} />
-                            : <CheckBoxOutlineBlankIcon fontSize="small" sx={{ fontSize: 16, color: "text.disabled" }} />}
+                            ? <CheckBoxIcon fontSize="small" sx={{ fontSize: 18, color: "#1E8E3E" }} />
+                            : <CheckBoxOutlineBlankIcon fontSize="small" sx={{ fontSize: 18, color: "text.disabled" }} />}
                         </ListItemIcon>
                         <ListItemText
                           primary={step}
                           primaryTypographyProps={{
                             sx: {
-                              fontSize: 12, lineHeight: 1.4,
+                              fontSize: 13, lineHeight: 1.45,
                               textDecoration: done ? "line-through" : "none",
                               color: done ? "text.disabled" : "text.primary",
                             },
@@ -124,31 +111,24 @@ export function ProtocolArmed() {
                   })}
                 </List>
                 {confirmed ? (
-                  <Chip size="small" label={`Confirmed · ${p.confirmed_by}`}
-                    sx={{
-                      mt: 0.75, height: 20, fontSize: 10,
-                      bgcolor: "rgba(129,201,149,0.18)",
-                      color: "#81C995",
-                      border: "1px solid rgba(129,201,149,0.4)",
-                    }} />
+                  <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 1 }}>
+                    <Box className="material-symbols-sharp" sx={{ fontSize: 16, color: "#1E8E3E" }}>check_circle</Box>
+                    <Typography sx={{ fontSize: 12, color: "#137333" }}>
+                      Confirmed by {p.confirmed_by}
+                    </Typography>
+                  </Stack>
                 ) : (
                   <Button
-                    fullWidth
-                    size="small"
-                    variant="contained"
-                    color="error"
+                    fullWidth size="small" variant="contained"
                     onClick={() => confirm(p.id)}
                     sx={{
-                      mt: 1, py: 0.65, fontSize: 12,
-                      bgcolor: isCritical ? "#D93025" : "#F9AB00",
-                      color: "#0B1220",
-                      "&:hover": {
-                        bgcolor: isCritical ? "#F28B82" : "#FDD663",
-                        boxShadow: `0 0 16px ${isCritical ? "rgba(217,48,37,0.5)" : "rgba(249,171,0,0.5)"}`,
-                      },
+                      mt: 1.25,
+                      bgcolor: accent,
+                      color: "#FFFFFF",
+                      "&:hover": { bgcolor: accent, filter: "brightness(0.92)" },
                     }}
                   >
-                    Confirm & Execute
+                    Confirm & execute
                   </Button>
                 )}
               </Box>
