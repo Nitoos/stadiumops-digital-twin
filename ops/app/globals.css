@@ -1,0 +1,6 @@
+html, body { padding: 0; margin: 0; height: 100%; }
+body { background: #0F1115; color: #E8EAED; font-family: "Roboto Flex","Inter",sans-serif; }
+#__next, body > div { height: 100%; }
+.material-symbols-sharp { font-family: "Material Symbols Sharp"; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; word-wrap: normal; direction: ltr; }
+canvas { display: block; }
+* { box-sizing: border-box; }
