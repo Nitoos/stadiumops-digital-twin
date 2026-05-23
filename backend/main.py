@@ -31,12 +31,22 @@ async def lifespan(app: FastAPI):
         sim_tick_sec=10,
     )
 
+    from backend.services.agent import AIAgent
+    from backend.services.protocol import ProtocolEngine
+    from backend.services.comms import CommsBus
+
+    app.state.agent = AIAgent()
+    app.state.protocol = ProtocolEngine(bus=bus)
+    app.state.protocol.attach()
+    app.state.comms = CommsBus(bus=bus)
+
     # Subscribe state store to every event for scrubber/replay
     def record(e: Event) -> None:
         app.state.store.record(ts=e.ts, kind=e.topic, payload=e.payload)
 
     for topic in ("density.tick", "anomaly.detected", "protocol.armed",
-                  "comms.broadcast", "weather.alert", "threat.signal"):
+                  "protocol.confirmed", "comms.broadcast", "weather.alert",
+                  "threat.signal"):
         bus.subscribe(topic, record)
 
     task = asyncio.create_task(app.state.orch.run_forever(real_seconds_per_tick=1.0))
