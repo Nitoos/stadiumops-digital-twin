@@ -1,0 +1,10 @@
+{
+  "name": "MatchDay Companion",
+  "short_name": "MatchDay",
+  "description": "Personalized matchday guidance",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFBFE",
+  "theme_color": "#1A73E8",
+  "icons": []
+}
