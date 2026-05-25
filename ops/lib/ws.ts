@@ -1,3 +1,5 @@
+import { getOpsToken } from "./api";
+
 const WS = process.env.NEXT_PUBLIC_WS ?? "ws://127.0.0.1:8000/ws";
 
 export type BusEvent = { topic: string; payload: any; ts: number };
@@ -17,14 +19,23 @@ class WsClient {
   }
 
   private _open() {
-    this.socket = new WebSocket(WS);
+    const token = getOpsToken();
+    // Browsers can't set Authorization headers on WS — pass via query string.
+    // Backend accepts EITHER header OR ?token=...
+    const url = token ? `${WS}?token=${encodeURIComponent(token)}` : WS;
+    this.socket = new WebSocket(url);
     this.socket.onmessage = (ev) => {
       try {
         const m = JSON.parse(ev.data) as BusEvent;
         this.handlers.forEach((h) => h(m));
       } catch {}
     };
-    this.socket.onclose = () => {
+    this.socket.onclose = (ev) => {
+      // 1008 = policy violation (auth failed) — don't auto-retry forever
+      if (ev.code === 1008) {
+        console.warn("WS auth failed — refusing to reconnect");
+        return;
+      }
       this.retry = Math.min(this.retry + 1, 6);
       setTimeout(() => this._open(), 500 * 2 ** this.retry);
     };

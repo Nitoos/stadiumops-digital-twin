@@ -1,8 +1,13 @@
 """FastAPI application entrypoint."""
 import asyncio
+import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.config import settings
 from backend.event_bus import bus, Event
@@ -26,10 +31,21 @@ from backend.services.fan import FanService
 from backend.api.ops import router as ops_router
 from backend.api.fan import router as fan_router
 from backend.api.ws import router as ws_router
+from backend.security.headers import SecurityHeadersMiddleware
+from backend.security.rate_limit import RateLimitMiddleware
+
+log = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if settings.ops_auth_enforce and not settings.ops_token:
+        raise RuntimeError(
+            "OPS_AUTH_ENFORCE=true but OPS_TOKEN is empty — refusing to start. "
+            "Generate one with `python -c 'import secrets; print(secrets.token_urlsafe(32))'` "
+            "and set it in .env."
+        )
+
     layout = load_layout()
     app.state.layout = layout
     app.state.bus = bus
@@ -64,6 +80,9 @@ async def lifespan(app: FastAPI):
 
     def record(e: Event) -> None:
         app.state.store.record(ts=e.ts, kind=e.topic, payload=e.payload)
+        # Cap bus history growth — drop oldest when over budget
+        if len(bus._history) > settings.bus_history_max:
+            bus._history = bus._history[-settings.bus_history_max:]
 
     for topic in ("density.tick", "anomaly.detected", "protocol.armed",
                   "protocol.confirmed", "comms.broadcast", "weather.alert",
@@ -78,14 +97,59 @@ async def lifespan(app: FastAPI):
         task.cancel()
 
 
-app = FastAPI(title="StadiumOps Command", lifespan=lifespan)
+app = FastAPI(
+    title="StadiumOps Command",
+    lifespan=lifespan,
+    # Strip server identification from headers
+    openapi_url="/openapi.json" if not settings.ops_auth_enforce else None,
+    docs_url="/docs" if not settings.ops_auth_enforce else None,
+    redoc_url=None,
+)
 
+# Order matters: outermost first → innermost last as middleware stack unwinds.
+# Security headers should be the outermost so they ship on every response (incl. errors).
+app.add_middleware(SecurityHeadersMiddleware, enable_hsts=settings.enable_hsts)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins_list(),
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+    max_age=600,
 )
+
+
+# --- Error handlers -----------------------------------------------------------
+@app.exception_handler(StarletteHTTPException)
+async def http_exc_handler(request: Request, exc: StarletteHTTPException):
+    # Preserve headers set on the exception (e.g. WWW-Authenticate on 401)
+    return JSONResponse(
+        {"error": "http_error", "status": exc.status_code, "detail": exc.detail},
+        status_code=exc.status_code,
+        headers=getattr(exc, "headers", None),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exc_handler(request: Request, exc: RequestValidationError):
+    # Don't leak Pydantic internals; surface only loc + msg.
+    redacted = [{"loc": e.get("loc"), "msg": e.get("msg"), "type": e.get("type")} for e in exc.errors()]
+    return JSONResponse(
+        {"error": "validation_error", "detail": redacted},
+        status_code=422,
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exc_handler(request: Request, exc: Exception):
+    # Log full traceback server-side; return generic message to client.
+    log.exception("Unhandled error processing %s %s", request.method, request.url.path)
+    body = {"error": "server_error"}
+    if not settings.redact_errors:
+        body["detail"] = str(exc)
+    return JSONResponse(body, status_code=500)
+
 
 app.include_router(ops_router)
 app.include_router(fan_router)
@@ -100,6 +164,7 @@ def health():
         "agent_mode": settings.agent_mode,
         "sim_time_sec": app.state.sim.sim_time_sec,
         "phase": app.state.sim.phase,
+        "auth_enforced": settings.ops_auth_enforce,
     }
 
 

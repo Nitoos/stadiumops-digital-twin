@@ -2,11 +2,42 @@ import type { Layout } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API ?? "http://127.0.0.1:8000";
 
+// The ops bearer token is loaded from one of (in order):
+//   1. localStorage (set by a login flow — Phase 1+)
+//   2. NEXT_PUBLIC_OPS_TOKEN env var (demo only — leaks in client bundle)
+// Phase 1+: swap for httpOnly cookie + same-site=strict after OIDC login.
+function getOpsToken(): string | null {
+  if (typeof window !== "undefined") {
+    const t = window.localStorage.getItem("stadiumops.token");
+    if (t) return t;
+  }
+  return process.env.NEXT_PUBLIC_OPS_TOKEN ?? null;
+}
+
+export function setOpsToken(token: string | null) {
+  if (typeof window === "undefined") return;
+  if (token) window.localStorage.setItem("stadiumops.token", token);
+  else window.localStorage.removeItem("stadiumops.token");
+}
+
+export class AuthError extends Error {
+  constructor() {
+    super("Ops authentication required or invalid token.");
+    this.name = "AuthError";
+  }
+}
+
 async function j<T>(path: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
-  });
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    ...(init?.headers as Record<string, string> ?? {}),
+  };
+  const token = getOpsToken();
+  if (token && path.startsWith("/api/ops")) {
+    headers["authorization"] = `Bearer ${token}`;
+  }
+  const r = await fetch(`${BASE}${path}`, { ...init, headers, credentials: "omit" });
+  if (r.status === 401) throw new AuthError();
   if (!r.ok) throw new Error(`${path} failed: ${r.status}`);
   return r.json() as Promise<T>;
 }
@@ -34,3 +65,5 @@ export const api = {
   runScene: (name: string) =>
     j("/api/ops/demo/scene", { method: "POST", body: JSON.stringify({ name }) }),
 };
+
+export { getOpsToken };

@@ -1,48 +1,102 @@
-"""Ops REST endpoints — used by StadiumOps Command dashboard."""
-from fastapi import APIRouter, HTTPException, Request, Body
-from pydantic import BaseModel
+"""Ops REST endpoints — used by StadiumOps Command dashboard.
 
-router = APIRouter(prefix="/api/ops", tags=["ops"])
+All mutation endpoints (POST) require a valid ops bearer token via the
+`require_ops_token` dependency. Read endpoints (GET) are also gated so the
+operational state isn't leaked to anonymous callers.
+"""
+from typing import Annotated, Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field, field_validator
+
+from backend.security.auth import require_ops_token
+
+# All routes under this prefix require a valid ops bearer token.
+router = APIRouter(prefix="/api/ops", tags=["ops"], dependencies=[Depends(require_ops_token)])
 
 
+# --- Allow-listed identifiers --------------------------------------------------
+_ZONE_IDS = {
+    "stand_a", "stand_b", "stand_c", "stand_d",
+    "concourse_n", "concourse_s", "concourse_e", "concourse_w",
+    "food_court", "restroom_n", "restroom_s",
+}
+_SECTION_IDS = {"stand_a", "stand_b", "stand_c", "stand_d"}
+_CHANNELS = {"push", "sms", "signage", "pa", "jumbotron"}
+_SEVERITIES = {"info", "warning", "critical"}
+_SCENE_NAMES = {"entry_surge", "storm", "drone_threat", "exit_surge"}
+
+
+# --- Request models -----------------------------------------------------------
 class SurgeRequest(BaseModel):
-    zone_id: str
-    magnitude: int = 2000
+    zone_id: str = Field(..., min_length=1, max_length=64)
+    magnitude: int = Field(2000, ge=-50_000, le=50_000)
+
+    @field_validator("zone_id")
+    @classmethod
+    def _zone_known(cls, v: str) -> str:
+        if v not in _ZONE_IDS:
+            raise ValueError("unknown zone_id")
+        return v
 
 
 class ConfirmRequest(BaseModel):
-    protocol_id: str
-    operator: str
+    protocol_id: str = Field(..., min_length=8, max_length=64)
+    operator: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9._-]+$")
 
 
 class BroadcastRequest(BaseModel):
-    title: str
-    body: str
-    sections: list[str]
-    channels: list[str] = ["push", "sms"]
-    stagger_sec: int = 90
-    route_hint: str | None = None
-    operator: str
+    title: str = Field(..., min_length=1, max_length=200)
+    body: str = Field(..., min_length=1, max_length=2000)
+    sections: list[str] = Field(..., min_length=1, max_length=8)
+    channels: list[str] = Field(default_factory=lambda: ["push", "sms"], min_length=1, max_length=8)
+    stagger_sec: int = Field(90, ge=0, le=600)
+    route_hint: str | None = Field(default=None, max_length=200)
+    operator: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9._-]+$")
+
+    @field_validator("sections")
+    @classmethod
+    def _sections_known(cls, v: list[str]) -> list[str]:
+        for s in v:
+            if s not in _SECTION_IDS:
+                raise ValueError(f"unknown section: {s}")
+        return v
+
+    @field_validator("channels")
+    @classmethod
+    def _channels_known(cls, v: list[str]) -> list[str]:
+        for c in v:
+            if c not in _CHANNELS:
+                raise ValueError(f"unknown channel: {c}")
+        return v
 
 
 class AgentAskRequest(BaseModel):
-    context: str
+    context: str = Field(..., min_length=1, max_length=2000)
 
 
 class InjectStormRequest(BaseModel):
-    eta_min: int = 12
-    lightning_km: float = 8.0
+    eta_min: int = Field(12, ge=0, le=180)
+    lightning_km: float = Field(8.0, ge=0, le=200)
 
 
 class InjectThreatRequest(BaseModel):
-    summary: str
-    severity: str = "warning"
+    summary: str = Field(..., min_length=1, max_length=500)
+    severity: Literal["info", "warning", "critical"] = "warning"
 
 
 class SceneRequest(BaseModel):
-    name: str  # "entry_surge" | "storm" | "drone_threat" | "exit_surge"
+    name: str = Field(..., min_length=1, max_length=32)
+
+    @field_validator("name")
+    @classmethod
+    def _scene_known(cls, v: str) -> str:
+        if v not in _SCENE_NAMES:
+            raise ValueError("unknown scene")
+        return v
 
 
+# --- Endpoints ----------------------------------------------------------------
 @router.get("/state")
 def get_state(request: Request):
     s = request.app.state
@@ -107,6 +161,8 @@ def get_aar(request: Request):
 
 @router.get("/scrub")
 def scrub(ts: float, request: Request):
+    if ts < 0 or ts > 32503680000:  # 0 — year ~3000 sanity bounds
+        raise HTTPException(status_code=400, detail="ts out of range")
     return {
         "density": request.app.state.store.at(ts=ts, kind="density.tick"),
     }
